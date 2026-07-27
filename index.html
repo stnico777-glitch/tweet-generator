@@ -326,6 +326,85 @@
         line-height: 1.4;
       }
 
+      .step {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+        margin: 0 0 14px;
+        background: #12151c;
+      }
+
+      .step:last-of-type {
+        margin-bottom: 10px;
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .step-num {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--blue);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        letter-spacing: 0.01em;
+      }
+
+      .example {
+        margin: 0 0 10px;
+        padding: 12px;
+        border-radius: 10px;
+        background: #0a0c10;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        font-size: 0.78rem;
+        line-height: 1.45;
+        white-space: pre-wrap;
+      }
+
+      .btn-big {
+        width: 100%;
+        padding: 14px 16px;
+        font-size: 1rem;
+        border-radius: 12px;
+      }
+
+      .btn-secondary-big {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 0.92rem;
+        border-radius: 12px;
+      }
+
+      .step .actions {
+        margin-top: 10px;
+      }
+
+      .step .actions.stack {
+        flex-direction: column;
+      }
+
+      .step label:first-of-type {
+        margin-top: 0;
+      }
+
       details.advanced {
         margin-top: 10px;
       }
@@ -354,70 +433,96 @@
   <body>
     <div class="wrap">
       <h1>Tweet Slide Generator</h1>
-      <p class="sub">
-        Paste a script → Load slides → Download all PNGs for your IG carousel.
-        Use **bold** for emphasis.
-      </p>
+      <p class="sub">Make Instagram carousel slides from a simple script.</p>
 
       <div class="layout">
         <aside class="panel">
-          <label for="displayName">Display name</label>
-          <input id="displayName" value="" placeholder="Your Name" />
+          <div class="step">
+            <div class="step-header">
+              <span class="step-num">1</span>
+              <div class="step-title">STEP 1 — Your profile</div>
+            </div>
 
-          <label for="handle">Handle</label>
-          <input id="handle" value="" placeholder="@username" />
+            <label for="displayName">Name</label>
+            <input id="displayName" value="" placeholder="Your Name" />
 
-          <label for="avatar">Profile photo</label>
-          <input id="avatar" type="file" accept="image/*" />
-          <p class="hint" id="avatarHint">
-            Upload once — saved on this device for next time.
-          </p>
+            <label for="handle">Handle</label>
+            <input id="handle" value="" placeholder="@username" />
 
-          <label for="scriptPaste">Paste full script</label>
-          <textarea
-            id="scriptPaste"
-            placeholder="Paste caption + numbered slides here…
-
-Your caption goes here…
-Swipe 👇
-
-1. Hook line
-2. Tip 1 — …
-3. Tip 2 — …"
-          ></textarea>
-          <div class="actions">
-            <button class="btn-primary" id="loadScriptBtn" type="button">
-              Load into slides
-            </button>
-            <button class="btn-ghost" id="copyCaptionBtn" type="button">
-              Copy caption
-            </button>
+            <label for="avatar">Photo</label>
+            <input id="avatar" type="file" accept="image/*" />
+            <p class="hint" id="avatarHint">
+              Upload once — saved on this device for next time.
+            </p>
           </div>
-          <p class="hint">
-            Tip: paste the whole script (caption + 1. 2. 3. slides). It auto-splits.
-          </p>
 
-          <div class="slide-nav">
-            <button class="btn-ghost" id="prevBtn" type="button">← Prev</button>
-            <strong id="slideCounter">Slide 1 / 1</strong>
-            <button class="btn-ghost" id="nextBtn" type="button">Next →</button>
+          <div class="step">
+            <div class="step-header">
+              <span class="step-num">2</span>
+              <div class="step-title">STEP 2 — Paste your script</div>
+            </div>
+
+            <div class="example">Example:
+Share this with a friend 💛
+
+1. First slide
+2. Second slide
+3. Third slide</div>
+
+            <label for="scriptPaste">Your script</label>
+            <textarea
+              id="scriptPaste"
+              placeholder="Paste your caption and numbered slides here…"
+            ></textarea>
+            <div class="actions">
+              <button class="btn-primary btn-big" id="loadScriptBtn" type="button">
+                Make slides
+              </button>
+            </div>
+            <p class="hint">Number each slide 1. 2. 3.</p>
           </div>
-          <div class="slide-list" id="slideList"></div>
 
-          <label for="tweetText">Edit current slide</label>
-          <textarea id="tweetText"></textarea>
+          <div class="step">
+            <div class="step-header">
+              <span class="step-num">3</span>
+              <div class="step-title">STEP 3 — Check each slide</div>
+            </div>
 
-          <div class="actions">
-            <button class="btn-primary" id="saveBtn" type="button">
-              Download this slide
-            </button>
-            <button class="btn-primary" id="saveAllBtn" type="button">
-              Download ALL slides
-            </button>
+            <div class="slide-nav">
+              <button class="btn-ghost" id="prevBtn" type="button">← Prev</button>
+              <strong id="slideCounter">Slide 1 / 1</strong>
+              <button class="btn-ghost" id="nextBtn" type="button">Next →</button>
+            </div>
+            <div class="slide-list" id="slideList"></div>
+
+            <label for="tweetText">Edit current slide</label>
+            <textarea id="tweetText"></textarea>
+
+            <div class="actions">
+              <button class="btn-ghost btn-secondary-big" id="copyCaptionBtn" type="button">
+                Copy caption
+              </button>
+            </div>
           </div>
-          <p class="hint" id="statusHint">
-            Downloads square 1:1 PNGs ready for Instagram.
-          </p>
+
+          <div class="step">
+            <div class="step-header">
+              <span class="step-num">4</span>
+              <div class="step-title">STEP 4 — Download</div>
+            </div>
+
+            <div class="actions stack">
+              <button class="btn-primary btn-big" id="saveAllBtn" type="button">
+                Download all slides (ZIP)
+              </button>
+              <button class="btn-ghost btn-secondary-big" id="saveBtn" type="button">
+                Download this slide only
+              </button>
+            </div>
+            <p class="hint" id="statusHint">
+              Start with Step 1, then paste a script in Step 2.
+            </p>
+          </div>
 
           <details class="advanced">
             <summary>More settings</summary>
@@ -689,7 +794,7 @@ Swipe 👇
       $("loadScriptBtn").addEventListener("click", () => {
         const parsed = parseScript($("scriptPaste").value);
         if (!parsed.slides.length) {
-          alert("Couldn’t find slides. Number them like:\n1. First slide\n2. Second slide");
+          alert("Number your slides like this:\n\n1. First slide\n2. Second slide");
           return;
         }
         setCarousel(parsed.caption, parsed.slides);
@@ -756,7 +861,7 @@ Swipe 👇
           console.error(err);
           alert("Could not save slide.");
         } finally {
-          btn.textContent = "Download this slide";
+          btn.textContent = "Download this slide only";
           btn.disabled = false;
         }
       });
@@ -796,7 +901,7 @@ Swipe 👇
           console.error(err);
           alert("Could not export all slides.");
         } finally {
-          btn.textContent = "Download ALL slides";
+          btn.textContent = "Download all slides (ZIP)";
           btn.disabled = false;
         }
       });
@@ -817,7 +922,7 @@ Swipe 👇
       updateAvatarHint();
       setCarousel("", [""]);
       $("statusHint").textContent =
-        "Blank canvas ready — set your name/photo, paste a script, then load slides.";
+        "Start with Step 1, then paste a script in Step 2.";
     </script>
   </body>
 </html>
