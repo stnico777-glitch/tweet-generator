@@ -13,7 +13,6 @@
         --text: #e7e9ea;
         --muted: #8b98a5;
         --blue: #1d9bf0;
-        --card: #000000;
       }
 
       * {
@@ -30,7 +29,7 @@
       }
 
       .wrap {
-        max-width: 980px;
+        max-width: 1100px;
         margin: 0 auto;
         padding: 28px 16px 48px;
       }
@@ -53,7 +52,7 @@
         grid-template-columns: 1fr;
       }
 
-      @media (min-width: 860px) {
+      @media (min-width: 960px) {
         .layout {
           grid-template-columns: 340px 1fr;
           align-items: start;
@@ -75,6 +74,15 @@
         letter-spacing: 0.02em;
       }
 
+      label.inline {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 12px;
+        color: var(--text);
+        font-size: 0.9rem;
+      }
+
       input,
       textarea,
       select {
@@ -88,7 +96,7 @@
       }
 
       textarea {
-        min-height: 120px;
+        min-height: 140px;
         resize: vertical;
         line-height: 1.4;
       }
@@ -133,21 +141,23 @@
         overflow: auto;
       }
 
-      /* Tweet card */
+      /* Fixed 1:1 canvas — matches IG carousel slide */
       #tweet {
-        width: 100%;
-        max-width: 560px;
-        background: var(--card);
+        width: min(560px, 100%);
+        aspect-ratio: 1 / 1;
+        background: #000;
         color: #e7e9ea;
-        border: 1px solid #2f3336;
-        border-radius: 16px;
-        padding: 16px 16px 14px;
+        border-radius: 8px;
+        padding: 44px 40px 40px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
       }
 
       #tweet.theme-light {
         background: #ffffff;
         color: #0f1419;
-        border-color: #eff3f4;
       }
 
       #tweet.theme-light .handle,
@@ -162,13 +172,14 @@
 
       .top {
         display: flex;
-        gap: 12px;
-        align-items: flex-start;
+        gap: 14px;
+        align-items: center;
+        flex-shrink: 0;
       }
 
       .avatar {
-        width: 48px;
-        height: 48px;
+        width: 56px;
+        height: 56px;
         border-radius: 50%;
         object-fit: cover;
         background: #333;
@@ -183,21 +194,20 @@
       .name-line {
         display: flex;
         align-items: center;
-        gap: 4px;
-        flex-wrap: wrap;
+        gap: 5px;
       }
 
       .display-name {
         font-weight: 700;
-        font-size: 15px;
+        font-size: 20px;
+        line-height: 1.2;
       }
 
       .verified {
-        width: 18.75px;
-        height: 18.75px;
+        width: 20px;
+        height: 20px;
         display: none;
         flex-shrink: 0;
-        margin-left: 2px;
         object-fit: contain;
       }
 
@@ -207,19 +217,33 @@
 
       .handle {
         color: #71767b;
-        font-size: 15px;
+        font-size: 17px;
+        line-height: 1.3;
+        margin-top: 2px;
       }
 
       .tweet-text {
-        margin: 12px 0 0;
-        font-size: 17px;
-        line-height: 1.4;
+        margin: 28px 0 0;
+        font-size: 34px;
+        font-weight: 500;
+        line-height: 1.35;
+        letter-spacing: -0.02em;
         white-space: pre-wrap;
         word-wrap: break-word;
+        flex: 1;
+      }
+
+      .tweet-text strong {
+        font-weight: 800;
+      }
+
+      .footer {
+        margin-top: auto;
+        padding-top: 18px;
+        flex-shrink: 0;
       }
 
       .meta {
-        margin-top: 14px;
         color: #71767b;
         font-size: 15px;
       }
@@ -251,12 +275,34 @@
         color: var(--muted);
         font-size: 0.8rem;
       }
+
+      @media (max-width: 600px) {
+        #tweet {
+          padding: 28px 24px;
+        }
+
+        .tweet-text {
+          font-size: 26px;
+          margin-top: 20px;
+        }
+
+        .display-name {
+          font-size: 17px;
+        }
+
+        .avatar {
+          width: 48px;
+          height: 48px;
+        }
+      }
     </style>
   </head>
   <body>
     <div class="wrap">
       <h1>Fake Tweet Generator</h1>
-      <p class="sub">Edit the fields → preview updates live → Save Image</p>
+      <p class="sub">
+        Edit → preview is already 1:1 → Save Image. Use **bold** for emphasis.
+      </p>
 
       <div class="layout">
         <aside class="panel">
@@ -267,28 +313,36 @@
           <input id="handle" value="@coachnico" />
 
           <label for="tweetText">Tweet text</label>
-          <textarea id="tweetText">Share this with your kid starting school again 💛
+          <textarea id="tweetText">I **HATED school** as a kid.
 
-A new year doesn’t need a new personality.
-It needs a better system.</textarea>
+Now I'm a successful young adult.
 
-          <div class="row">
-            <div>
-              <label for="time">Time</label>
-              <input id="time" value="2:41 PM" />
-            </div>
-            <div>
-              <label for="date">Date</label>
-              <input id="date" value="Jul 27, 2026" />
+Here are **10 things** I wish I knew sooner 📚👉</textarea>
+
+          <label class="inline">
+            <input id="showMeta" type="checkbox" style="width: auto" />
+            Show time / date
+          </label>
+
+          <div id="metaFields" style="display: none">
+            <div class="row">
+              <div>
+                <label for="time">Time</label>
+                <input id="time" value="2:41 PM" />
+              </div>
+              <div>
+                <label for="date">Date</label>
+                <input id="date" value="Jul 27, 2026" />
+              </div>
             </div>
           </div>
 
-          <label>
-            <input id="showStats" type="checkbox" checked style="width: auto" />
+          <label class="inline">
+            <input id="showStats" type="checkbox" style="width: auto" />
             Show replies / reposts / likes / views
           </label>
 
-          <div id="statsFields">
+          <div id="statsFields" style="display: none">
             <div class="row">
               <div>
                 <label for="replies">Replies</label>
@@ -321,7 +375,7 @@ It needs a better system.</textarea>
             <option value="dark">Dark</option>
           </select>
 
-          <label>
+          <label class="inline">
             <input id="verified" type="checkbox" checked style="width: auto" />
             Show verified badge
           </label>
@@ -332,7 +386,7 @@ It needs a better system.</textarea>
             </button>
             <button class="btn-ghost" id="resetBtn" type="button">Reset</button>
           </div>
-          <p class="hint">Downloads a square 1:1 PNG of the tweet.</p>
+          <p class="hint">Downloads a square 1:1 PNG that fills the frame.</p>
         </aside>
 
         <section class="panel preview-wrap">
@@ -352,36 +406,37 @@ It needs a better system.</textarea>
                     id="verifiedOut"
                     src="verified.png"
                     alt="Verified"
-                    width="19"
-                    height="19"
+                    width="20"
+                    height="20"
                   />
                 </div>
                 <div class="handle" id="handleOut">@coachnico</div>
               </div>
             </div>
 
-            <p class="tweet-text" id="textOut"></p>
+            <div class="tweet-text" id="textOut"></div>
 
-            <div class="meta">
-              <span id="timeOut">2:41 PM</span> ·
-              <span id="dateOut">Jul 27, 2026</span>
-            </div>
+            <div class="footer" id="footerBlock" style="display: none">
+              <div class="meta" id="metaBlock" style="display: none">
+                <span id="timeOut">2:41 PM</span> ·
+                <span id="dateOut">Jul 27, 2026</span>
+              </div>
 
-            <div id="statsBlock">
-              <hr class="divider" />
-
-              <div class="stats">
-                <div class="stat">
-                  <strong id="repliesOut">42</strong><span>Replies</span>
-                </div>
-                <div class="stat">
-                  <strong id="repostsOut">318</strong><span>Reposts</span>
-                </div>
-                <div class="stat">
-                  <strong id="likesOut">2.4K</strong><span>Likes</span>
-                </div>
-                <div class="stat">
-                  <strong id="viewsOut">184K</strong><span>Views</span>
+              <div id="statsBlock" style="display: none">
+                <hr class="divider" id="statsDivider" />
+                <div class="stats">
+                  <div class="stat">
+                    <strong id="repliesOut">42</strong><span>Replies</span>
+                  </div>
+                  <div class="stat">
+                    <strong id="repostsOut">318</strong><span>Reposts</span>
+                  </div>
+                  <div class="stat">
+                    <strong id="likesOut">2.4K</strong><span>Likes</span>
+                  </div>
+                  <div class="stat">
+                    <strong id="viewsOut">184K</strong><span>Views</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -397,7 +452,7 @@ It needs a better system.</textarea>
         displayName: "Coach Nico",
         handle: "@coachnico",
         tweetText:
-          "Share this with your kid starting school again 💛\n\nA new year doesn’t need a new personality.\nIt needs a better system.",
+          "I **HATED school** as a kid.\n\nNow I'm a successful young adult.\n\nHere are **10 things** I wish I knew sooner 📚👉",
         time: "2:41 PM",
         date: "Jul 27, 2026",
         replies: "42",
@@ -406,18 +461,33 @@ It needs a better system.</textarea>
         views: "184K",
         theme: "light",
         verified: true,
-        showStats: true,
+        showStats: false,
+        showMeta: false,
       };
 
       const defaultAvatar =
         "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect fill='%231d9bf0' width='96' height='96'/%3E%3Ctext x='50%25' y='54%25' fill='white' font-size='36' font-family='Arial' text-anchor='middle' dominant-baseline='middle'%3ECN%3C/text%3E%3C/svg%3E";
+
+      function escapeHtml(str) {
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function renderTweetHtml(raw) {
+        return escapeHtml(raw)
+          .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+          .replace(/\n/g, "<br>");
+      }
 
       function sync() {
         $("nameOut").textContent = $("displayName").value || "Name";
         let handle = $("handle").value.trim() || "@handle";
         if (!handle.startsWith("@")) handle = "@" + handle;
         $("handleOut").textContent = handle;
-        $("textOut").textContent = $("tweetText").value;
+        $("textOut").innerHTML = renderTweetHtml($("tweetText").value);
         $("timeOut").textContent = $("time").value || "12:00 PM";
         $("dateOut").textContent = $("date").value || "Jan 1, 2026";
         $("repliesOut").textContent = $("replies").value || "0";
@@ -431,8 +501,13 @@ It needs a better system.</textarea>
         $("verifiedOut").classList.toggle("show", $("verified").checked);
 
         const showStats = $("showStats").checked;
+        const showMeta = $("showMeta").checked;
         $("statsBlock").style.display = showStats ? "" : "none";
         $("statsFields").style.display = showStats ? "" : "none";
+        $("metaBlock").style.display = showMeta ? "" : "none";
+        $("metaFields").style.display = showMeta ? "" : "none";
+        $("footerBlock").style.display = showStats || showMeta ? "" : "none";
+        $("statsDivider").style.display = showStats && showMeta ? "" : "none";
       }
 
       [
@@ -448,6 +523,7 @@ It needs a better system.</textarea>
         "theme",
         "verified",
         "showStats",
+        "showMeta",
       ].forEach((id) => {
         $(id).addEventListener("input", sync);
         $(id).addEventListener("change", sync);
@@ -465,7 +541,7 @@ It needs a better system.</textarea>
 
       $("resetBtn").addEventListener("click", () => {
         Object.entries(defaults).forEach(([key, value]) => {
-          if (key === "verified" || key === "showStats") {
+          if (key === "verified" || key === "showStats" || key === "showMeta") {
             $(key).checked = value;
           } else if ($(key)) {
             $(key).value = value;
@@ -482,28 +558,16 @@ It needs a better system.</textarea>
         btn.disabled = true;
         try {
           const tweet = $("tweet");
-          const captured = await html2canvas(tweet, {
-            backgroundColor: null,
-            scale: 2,
+          const isLight = $("theme").value === "light";
+          const canvas = await html2canvas(tweet, {
+            backgroundColor: isLight ? "#ffffff" : "#000000",
+            scale: 3,
             useCORS: true,
           });
 
-          // Pad to exact 1:1 square
-          const size = Math.max(captured.width, captured.height);
-          const square = document.createElement("canvas");
-          square.width = size;
-          square.height = size;
-          const ctx = square.getContext("2d");
-          const isLight = $("theme").value === "light";
-          ctx.fillStyle = isLight ? "#ffffff" : "#000000";
-          ctx.fillRect(0, 0, size, size);
-          const x = Math.round((size - captured.width) / 2);
-          const y = Math.round((size - captured.height) / 2);
-          ctx.drawImage(captured, x, y);
-
           const link = document.createElement("a");
           link.download = "tweet-1x1.png";
-          link.href = square.toDataURL("image/png");
+          link.href = canvas.toDataURL("image/png");
           link.click();
         } catch (err) {
           alert("Could not save image. Try again.");
