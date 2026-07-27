@@ -697,14 +697,10 @@ Share this with a friend 💛
       }
 
       async function upsertSubscriber(email, name) {
-        const payload = {
-          email: email.trim().toLowerCase(),
-          name: (name || "").trim() || null,
-          source: "slide-generator",
-          last_seen_at: new Date().toISOString(),
-        };
-        const { error } = await supabase.from("subscribers").upsert(payload, {
-          onConflict: "email",
+        const { error } = await supabase.rpc("check_in_subscriber", {
+          p_email: email.trim().toLowerCase(),
+          p_name: (name || "").trim() || null,
+          p_source: "slide-generator",
         });
         if (error) throw error;
       }
