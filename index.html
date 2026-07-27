@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tweet Slide Generator</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
     <script src="./config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
@@ -505,18 +505,20 @@
         <h2>Check in</h2>
         <p class="auth-copy">Enter your email to use the free slide generator.</p>
 
-        <label for="authEmail">Email</label>
-        <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
+        <form id="authForm">
+          <label for="authEmail">Email</label>
+          <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
 
-        <label for="authName">Name <span style="opacity:0.7">(optional)</span></label>
-        <input id="authName" type="text" autocomplete="name" placeholder="Your name" />
+          <label for="authName">Name <span style="opacity:0.7">(optional)</span></label>
+          <input id="authName" type="text" autocomplete="name" placeholder="Your name" />
 
-        <div class="auth-actions">
-          <button class="btn-primary btn-big" id="authContinueBtn" type="button">Continue</button>
-          <button class="btn-ghost btn-secondary-big" id="authMagicLinkBtn" type="button">
-            Email me a login link
-          </button>
-        </div>
+          <div class="auth-actions">
+            <button class="btn-primary btn-big" id="authContinueBtn" type="submit">Continue</button>
+            <button class="btn-ghost btn-secondary-big" id="authMagicLinkBtn" type="button">
+              Email me a login link
+            </button>
+          </div>
+        </form>
         <p id="authStatus"></p>
       </div>
     </div>
@@ -680,10 +682,21 @@ Share this with a friend 💛
       const STORAGE_KEY = "tweetSlideGenerator";
 
       const ACCESS_KEY = "tweetSlideAccess";
-      const supabase = window.supabase.createClient(
-        window.SUPABASE_URL,
-        window.SUPABASE_ANON_KEY
-      );
+      let supabase = null;
+      try {
+        if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) {
+          throw new Error("Missing Supabase config");
+        }
+        const createClient =
+          window.supabase?.createClient ||
+          window.supabase?.default?.createClient;
+        if (!createClient) {
+          throw new Error("Supabase library failed to load");
+        }
+        supabase = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+      } catch (err) {
+        console.error(err);
+      }
 
       function setAuthStatus(msg, kind) {
         const el = $("authStatus");
@@ -697,6 +710,7 @@ Share this with a friend 💛
       }
 
       async function upsertSubscriber(email, name) {
+        if (!supabase) throw new Error("Login service unavailable. Refresh and try again.");
         const { error } = await supabase.rpc("check_in_subscriber", {
           p_email: email.trim().toLowerCase(),
           p_name: (name || "").trim() || null,
@@ -722,20 +736,33 @@ Share this with a friend 💛
         const name = ($("authName").value || "").trim();
         if (!isValidEmail(email)) {
           setAuthStatus("Please enter a valid email.", "error");
+          $("authEmail").focus();
           return;
         }
         const btn = $("authContinueBtn");
+        const original = btn.textContent;
         btn.disabled = true;
-        setAuthStatus("Checking in…");
+        btn.textContent = "Checking in…";
+        setAuthStatus("Saving your email…");
         try {
           await upsertSubscriber(email, name);
           await unlock(email);
-          setAuthStatus("Welcome — you're in.", "ok");
         } catch (err) {
           console.error(err);
-          setAuthStatus(err.message || "Could not check in. Try again.", "error");
+          // Still unlock so the tool isn't blocked if network/RPC flakes,
+          // but keep their email locally for retry.
+          localStorage.setItem(
+            ACCESS_KEY,
+            JSON.stringify({ email, name, at: Date.now(), pendingSync: true })
+          );
+          await unlock(email);
+          setAuthStatus(
+            "You're in. (Email sync had a hiccup — we'll retry next visit.)",
+            "ok"
+          );
         } finally {
           btn.disabled = false;
+          btn.textContent = original;
         }
       }
 
@@ -744,6 +771,10 @@ Share this with a friend 💛
         const name = ($("authName").value || "").trim();
         if (!isValidEmail(email)) {
           setAuthStatus("Please enter a valid email.", "error");
+          return;
+        }
+        if (!supabase) {
+          setAuthStatus("Login service unavailable. Refresh and try again.", "error");
           return;
         }
         const btn = $("authMagicLinkBtn");
@@ -769,7 +800,7 @@ Share this with a friend 💛
 
       async function signOut() {
         try {
-          await supabase.auth.signOut();
+          if (supabase) await supabase.auth.signOut();
         } catch (err) {
           console.error(err);
         }
@@ -782,15 +813,23 @@ Share this with a friend 💛
       }
 
       async function bootAuth() {
+        if (!supabase) {
+          // Library failed — still allow gate to work via local unlock path
+          return;
+        }
         try {
           const {
             data: { session },
           } = await supabase.auth.getSession();
           if (session?.user?.email) {
-            await upsertSubscriber(
-              session.user.email,
-              session.user.user_metadata?.name
-            );
+            try {
+              await upsertSubscriber(
+                session.user.email,
+                session.user.user_metadata?.name
+              );
+            } catch (err) {
+              console.error(err);
+            }
             await unlock(session.user.email);
             return;
           }
@@ -801,7 +840,11 @@ Share this with a friend 💛
         try {
           const saved = JSON.parse(localStorage.getItem(ACCESS_KEY) || "null");
           if (saved?.email) {
-            await upsertSubscriber(saved.email, null);
+            try {
+              await upsertSubscriber(saved.email, saved.name || null);
+            } catch (err) {
+              console.error(err);
+            }
             await unlock(saved.email);
             return;
           }
@@ -1134,12 +1177,12 @@ Share this with a friend 💛
       });
 
 
-      $("authContinueBtn").addEventListener("click", checkInContinue);
+      $("authForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        checkInContinue();
+      });
       $("authMagicLinkBtn").addEventListener("click", sendMagicLink);
       $("signOutBtn").addEventListener("click", signOut);
-      $("authEmail").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") checkInContinue();
-      });
 
       // Init
       bootAuth();
