@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tweet Slide Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <style>
@@ -428,9 +430,98 @@
           height: 48px;
         }
       }
+
+      /* Auth gate */
+      #authGate {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+        background: rgba(8, 10, 14, 0.92);
+        backdrop-filter: blur(8px);
+      }
+
+      #authGate .auth-panel {
+        width: min(420px, 100%);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      }
+
+      #authGate h2 {
+        margin: 0 0 8px;
+        font-size: 1.25rem;
+        font-weight: 700;
+      }
+
+      #authGate .auth-copy {
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.45;
+      }
+
+      #authGate label {
+        margin-top: 10px;
+      }
+
+      #authGate .auth-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      #authStatus {
+        margin: 14px 0 0;
+        min-height: 1.2em;
+        font-size: 0.85rem;
+        color: var(--muted);
+        line-height: 1.4;
+      }
+
+      #authStatus.error {
+        color: #ff6b6b;
+      }
+
+      #authStatus.ok {
+        color: #4ade80;
+      }
+
+      #signOutBtn {
+        margin-top: 14px;
+        width: 100%;
+      }
     </style>
   </head>
   <body>
+    <div id="authGate">
+      <div class="auth-panel">
+        <h2>Check in</h2>
+        <p class="auth-copy">Enter your email to use the free slide generator.</p>
+
+        <label for="authEmail">Email</label>
+        <input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
+
+        <label for="authName">Name <span style="opacity:0.7">(optional)</span></label>
+        <input id="authName" type="text" autocomplete="name" placeholder="Your name" />
+
+        <div class="auth-actions">
+          <button class="btn-primary btn-big" id="authContinueBtn" type="button">Continue</button>
+          <button class="btn-ghost btn-secondary-big" id="authMagicLinkBtn" type="button">
+            Email me a login link
+          </button>
+        </div>
+        <p id="authStatus"></p>
+      </div>
+    </div>
+
+    <div id="appWrap" style="display:none">
     <div class="wrap">
       <h1>Tweet Slide Generator</h1>
       <p class="sub">Make Instagram carousel slides from a simple script.</p>
@@ -541,6 +632,10 @@ Share this with a friend 💛
               <input id="verified" type="checkbox" checked style="width: auto" />
               Show verified badge
             </label>
+
+            <button class="btn-ghost" id="signOutBtn" type="button">
+              Sign out
+            </button>
           </details>
         </aside>
 
@@ -578,10 +673,146 @@ Share this with a friend 💛
         </section>
       </div>
     </div>
+    </div>
 
     <script>
       const $ = (id) => document.getElementById(id);
       const STORAGE_KEY = "tweetSlideGenerator";
+
+      const ACCESS_KEY = "tweetSlideAccess";
+      const supabase = window.supabase.createClient(
+        window.SUPABASE_URL,
+        window.SUPABASE_ANON_KEY
+      );
+
+      function setAuthStatus(msg, kind) {
+        const el = $("authStatus");
+        el.textContent = msg || "";
+        el.classList.remove("error", "ok");
+        if (kind) el.classList.add(kind);
+      }
+
+      function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      }
+
+      async function upsertSubscriber(email, name) {
+        const payload = {
+          email: email.trim().toLowerCase(),
+          name: (name || "").trim() || null,
+          source: "slide-generator",
+          last_seen_at: new Date().toISOString(),
+        };
+        const { error } = await supabase.from("subscribers").upsert(payload, {
+          onConflict: "email",
+        });
+        if (error) throw error;
+      }
+
+      async function unlock(email) {
+        localStorage.setItem(
+          ACCESS_KEY,
+          JSON.stringify({
+            email,
+            at: Date.now(),
+          })
+        );
+        document.getElementById("authGate").style.display = "none";
+        document.getElementById("appWrap").style.display = "";
+      }
+
+      async function checkInContinue() {
+        const email = ($("authEmail").value || "").trim().toLowerCase();
+        const name = ($("authName").value || "").trim();
+        if (!isValidEmail(email)) {
+          setAuthStatus("Please enter a valid email.", "error");
+          return;
+        }
+        const btn = $("authContinueBtn");
+        btn.disabled = true;
+        setAuthStatus("Checking in…");
+        try {
+          await upsertSubscriber(email, name);
+          await unlock(email);
+          setAuthStatus("Welcome — you're in.", "ok");
+        } catch (err) {
+          console.error(err);
+          setAuthStatus(err.message || "Could not check in. Try again.", "error");
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      async function sendMagicLink() {
+        const email = ($("authEmail").value || "").trim().toLowerCase();
+        const name = ($("authName").value || "").trim();
+        if (!isValidEmail(email)) {
+          setAuthStatus("Please enter a valid email.", "error");
+          return;
+        }
+        const btn = $("authMagicLinkBtn");
+        btn.disabled = true;
+        setAuthStatus("Sending login link…");
+        try {
+          await upsertSubscriber(email, name);
+          const { error } = await supabase.auth.signInWithOtp({
+            email,
+            options: {
+              emailRedirectTo: window.location.origin,
+            },
+          });
+          if (error) throw error;
+          setAuthStatus("Check your email for a login link.", "ok");
+        } catch (err) {
+          console.error(err);
+          setAuthStatus(err.message || "Could not send login link.", "error");
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      async function signOut() {
+        try {
+          await supabase.auth.signOut();
+        } catch (err) {
+          console.error(err);
+        }
+        localStorage.removeItem(ACCESS_KEY);
+        document.getElementById("appWrap").style.display = "none";
+        document.getElementById("authGate").style.display = "flex";
+        setAuthStatus("");
+        $("authEmail").value = "";
+        $("authName").value = "";
+      }
+
+      async function bootAuth() {
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (session?.user?.email) {
+            await upsertSubscriber(
+              session.user.email,
+              session.user.user_metadata?.name
+            );
+            await unlock(session.user.email);
+            return;
+          }
+        } catch (err) {
+          console.error(err);
+        }
+
+        try {
+          const saved = JSON.parse(localStorage.getItem(ACCESS_KEY) || "null");
+          if (saved?.email) {
+            await upsertSubscriber(saved.email, null);
+            await unlock(saved.email);
+            return;
+          }
+        } catch {}
+        // stay on gate
+      }
+
       const defaultAvatar =
         "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect fill='%238b98a5' width='96' height='96'/%3E%3Ctext x='50%25' y='54%25' fill='white' font-size='36' font-family='Arial' text-anchor='middle' dominant-baseline='middle'%3E%3F%3C/text%3E%3C/svg%3E";
 
@@ -906,7 +1137,16 @@ Share this with a friend 💛
         }
       });
 
+
+      $("authContinueBtn").addEventListener("click", checkInContinue);
+      $("authMagicLinkBtn").addEventListener("click", sendMagicLink);
+      $("signOutBtn").addEventListener("click", signOut);
+      $("authEmail").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") checkInContinue();
+      });
+
       // Init
+      bootAuth();
       const saved = loadSaved();
       if (saved) {
         if (saved.displayName) $("displayName").value = saved.displayName;
