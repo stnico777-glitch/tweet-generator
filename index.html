@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Coach Nico Slide Generator</title>
+    <title>Tweet Slide Generator</title>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <style>
@@ -353,7 +353,7 @@
   </head>
   <body>
     <div class="wrap">
-      <h1>Coach Nico Slide Generator</h1>
+      <h1>Tweet Slide Generator</h1>
       <p class="sub">
         Paste a script → Load slides → Download all PNGs for your IG carousel.
         Use **bold** for emphasis.
@@ -361,15 +361,24 @@
 
       <div class="layout">
         <aside class="panel">
-          <label>Quick load — back to school</label>
-          <div class="chip-row" id="presetRow"></div>
+          <label for="displayName">Display name</label>
+          <input id="displayName" value="" placeholder="Your Name" />
+
+          <label for="handle">Handle</label>
+          <input id="handle" value="" placeholder="@username" />
+
+          <label for="avatar">Profile photo</label>
+          <input id="avatar" type="file" accept="image/*" />
+          <p class="hint" id="avatarHint">
+            Upload once — saved on this device for next time.
+          </p>
 
           <label for="scriptPaste">Paste full script</label>
           <textarea
             id="scriptPaste"
             placeholder="Paste caption + numbered slides here…
 
-Share this with a teen…
+Your caption goes here…
 Swipe 👇
 
 1. Hook line
@@ -411,17 +420,8 @@ Swipe 👇
           </p>
 
           <details class="advanced">
-            <summary>Profile & settings</summary>
+            <summary>More settings</summary>
 
-            <label for="displayName">Display name</label>
-            <input id="displayName" value="Coach Nico" />
-
-            <label for="handle">Handle</label>
-            <input id="handle" value="@coachnico" />
-
-            <label for="avatar">Profile photo (saved on this device)</label>
-            <input id="avatar" type="file" accept="image/*" />
-            <p class="hint" id="avatarHint">Upload once — it comes back next visit.</p>
             <button class="btn-ghost" id="clearAvatarBtn" type="button">
               Clear saved photo
             </button>
@@ -445,12 +445,12 @@ Swipe 👇
               <img
                 id="avatarImg"
                 class="avatar"
-                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect fill='%231d9bf0' width='96' height='96'/%3E%3Ctext x='50%25' y='54%25' fill='white' font-size='36' font-family='Arial' text-anchor='middle' dominant-baseline='middle'%3ECN%3C/text%3E%3C/svg%3E"
+                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect fill='%238b98a5' width='96' height='96'/%3E%3Ctext x='50%25' y='54%25' fill='white' font-size='34' font-family='Arial' text-anchor='middle' dominant-baseline='middle'%3E%3F%3C/text%3E%3C/svg%3E"
                 alt="Avatar"
               />
               <div class="names">
                 <div class="name-line">
-                  <span class="display-name" id="nameOut">Coach Nico</span>
+                  <span class="display-name" id="nameOut">Your Name</span>
                   <img
                     class="verified show"
                     id="verifiedOut"
@@ -460,7 +460,7 @@ Swipe 👇
                     height="20"
                   />
                 </div>
-                <div class="handle" id="handleOut">@coachnico</div>
+                <div class="handle" id="handleOut">@username</div>
               </div>
             </div>
             <div class="tweet-text" id="textOut"></div>
@@ -476,94 +476,14 @@ Swipe 👇
 
     <script>
       const $ = (id) => document.getElementById(id);
-      const STORAGE_KEY = "coachNicoTweetGen";
+      const STORAGE_KEY = "tweetSlideGenerator";
       const defaultAvatar =
-        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect fill='%231d9bf0' width='96' height='96'/%3E%3Ctext x='50%25' y='54%25' fill='white' font-size='36' font-family='Arial' text-anchor='middle' dominant-baseline='middle'%3ECN%3C/text%3E%3C/svg%3E";
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect fill='%238b98a5' width='96' height='96'/%3E%3Ctext x='50%25' y='54%25' fill='white' font-size='36' font-family='Arial' text-anchor='middle' dominant-baseline='middle'%3E%3F%3C/text%3E%3C/svg%3E";
 
       let savedAvatar = null;
-      let slides = [
-        "I **HATED school** as a kid.\n\nNow I'm a successful young adult.\n\nHere are **10 things** I wish I knew sooner 📚👉",
-      ];
+      let slides = [""];
       let caption = "";
       let slideIndex = 0;
-
-      const PRESETS = [
-        {
-          title: "Start strong",
-          caption:
-            "Share this with a teen starting school again 💛\n\nA new year doesn’t need a new personality.\nIt needs a better system.\n\nSwipe 👇",
-          slides: [
-            "Back to school isn’t about being perfect.\n\nIt’s about starting strong without burning out in week 2.",
-            "Tip 1\n\nPack your bag the night before.\n\nFuture-you will thank present-you every morning.",
-            "Tip 2\n\nDon’t wait to “feel motivated.”\n\nOpen the laptop for 10 minutes. Momentum beats motivation.",
-            "Tip 3\n\nPhone away while you study.\n\nFocus is an environment, not a personality trait.",
-            "Tip 4\n\nFind one person who makes school feel lighter.\n\nOne good friend > trying to impress everyone.",
-            "Tip 5\n\nAsk for help early.\n\nWaiting until you’re drowning makes everything louder.",
-            "You’re allowed to hate parts of school\nand still show up for yourself.",
-            "Save this for the first hard week 💛",
-          ],
-        },
-        {
-          title: "Week one",
-          caption:
-            "Send this to a teen stressing about week one 💛\n\nThe first week always feels bigger than it is.\nHere’s how to survive it without freaking out.\n\nSwipe 👇",
-          slides: [
-            "Week one is loud.\n\nNew teachers. New pressure. New everything.",
-            "Tip 1\n\nGive yourself 2 weeks before you decide you “hate” a class.\n\nFirst impressions lie.",
-            "Tip 2\n\nWrite down every assignment the day you get it.\n\nYour brain shouldn’t be your only planner.",
-            "Tip 3\n\nSit near people who take school seriously.\n\nEnergy is contagious.",
-            "Tip 4\n\nSleep is not optional.\n\nTired teens make reckless decisions.",
-            "Tip 5\n\nTell one adult when you’re overwhelmed.\n\nSilence makes stress heavier.",
-            "You don’t need to dominate week one.\n\nYou just need to stay steady.",
-            "Tag a teen who’s overthinking already 💙",
-          ],
-        },
-        {
-          title: "Don’t fall behind",
-          caption:
-            "For the teen who always starts strong… then crashes in October 💛\n\nFalling behind is rarely one bad day.\nIt’s 20 tiny delays.\n\nSwipe 👇",
-          slides: [
-            "Nobody falls behind overnight.\n\nThey fall behind by saying “I’ll do it later” too many times.",
-            "Tip 1\n\nSame study time every day.\n\nEven 25 minutes. Consistency beats cramming.",
-            "Tip 2\n\nFinish the hard class first.\n\nDon’t save the worst for when you’re drained.",
-            "Tip 3\n\nTurn in incomplete work over late work.\n\nPerfect is usually just fear in disguise.",
-            "Tip 4\n\nCheck grades weekly — not when it’s too late.\n\nAwareness is power.",
-            "Tip 5\n\nBuild a Sunday reset.\n\nClean bag. Clear desk. Plan the week.",
-            "Discipline isn’t punishment.\n\nIt’s self-respect in action.",
-            "Save this before midterms hit 💛",
-          ],
-        },
-        {
-          title: "Grades ≠ worth",
-          caption:
-            "Share this with a teen who ties their whole value to grades 💛\n\nSchool matters.\nIt just isn’t the whole story of who you are.\n\nSwipe 👇",
-          slides: [
-            "A bad grade can teach you something.\n\nIt should never tell you you’re worthless.",
-            "Tip 1\n\nSeparate “I failed a test” from “I am a failure.”\n\nThose are not the same sentence.",
-            "Tip 2\n\nEffort is still worth celebrating.\n\nShowing up when it’s hard builds real character.",
-            "Tip 3\n\nAsk for help before shame talks you out of it.\n\nSmart people ask questions.",
-            "Tip 4\n\nKeep one thing outside school that makes you feel alive.\n\nSports. Music. Faith. Friends. Something.",
-            "Tip 5\n\nTalk to yourself like you’d talk to a friend.\n\nYou’d never bully someone you love.",
-            "Your report card is feedback.\n\nNot a final identity.",
-            "Send this to someone who’s being too hard on themselves 💙",
-          ],
-        },
-        {
-          title: "Lead yourself",
-          caption:
-            "For the teen ready to stop waiting to be “forced” to care 💛\n\nThis year won’t change because adults push harder.\nIt changes when you lead yourself.\n\nSwipe 👇",
-          slides: [
-            "Nobody is coming to drag your future into place.\n\nYou get to build it — one choice at a time.",
-            "Tip 1\n\nBe early on purpose.\n\nIt sounds small. It changes everything.",
-            "Tip 2\n\nDo homework before entertainment.\n\nEarn the scroll.",
-            "Tip 3\n\nKeep promises to yourself.\n\n“I’ll study at 7” means 7 — not 7:40.",
-            "Tip 4\n\nSurround yourself with people who raise your standard.\n\nYour circle is either sharpening you or softening you.",
-            "Tip 5\n\nWhen you mess up, reset the same day.\n\nDon’t let one miss become a whole month.",
-            "Leading yourself isn’t flashy.\n\nIt’s quiet consistency when no one’s watching.",
-            "Save this. Make it your year 💛",
-          ],
-        },
-      ];
 
       function loadSaved() {
         try {
@@ -685,7 +605,7 @@ Swipe 👇
 
       function setCarousel(nextCaption, nextSlides) {
         caption = nextCaption || "";
-        slides = nextSlides.length ? nextSlides : ["Add slide text…"];
+        slides = nextSlides.length ? nextSlides : [""];
         slideIndex = 0;
         $("scriptPaste").value = buildPasteText();
         $("captionOut").textContent = caption || "—";
@@ -740,8 +660,8 @@ Swipe 👇
       }
 
       function syncProfile() {
-        $("nameOut").textContent = $("displayName").value || "Name";
-        let handle = $("handle").value.trim() || "@handle";
+        $("nameOut").textContent = $("displayName").value || "Your Name";
+        let handle = $("handle").value.trim() || "@username";
         if (!handle.startsWith("@")) handle = "@" + handle;
         $("handleOut").textContent = handle;
         const tweet = $("tweet");
@@ -765,21 +685,6 @@ Swipe 👇
         return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
       }
 
-      // Presets
-      const presetRow = $("presetRow");
-      PRESETS.forEach((preset, idx) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "chip";
-        btn.textContent = `${idx + 1}. ${preset.title}`;
-        btn.addEventListener("click", () => {
-          [...presetRow.children].forEach((c) => c.classList.remove("active"));
-          btn.classList.add("active");
-          setCarousel(preset.caption, [...preset.slides]);
-          $("statusHint").textContent = `Loaded “${preset.title}” — ${preset.slides.length} slides ready.`;
-        });
-        presetRow.appendChild(btn);
-      });
 
       $("loadScriptBtn").addEventListener("click", () => {
         const parsed = parseScript($("scriptPaste").value);
@@ -910,8 +815,9 @@ Swipe 👇
         }
       }
       updateAvatarHint();
-      setCarousel(PRESETS[0].caption, [...PRESETS[0].slides]);
-      presetRow.children[0]?.classList.add("active");
+      setCarousel("", [""]);
+      $("statusHint").textContent =
+        "Blank canvas ready — set your name/photo, paste a script, then load slides.";
     </script>
   </body>
 </html>
